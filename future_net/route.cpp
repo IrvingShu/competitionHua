@@ -4,16 +4,20 @@
 #include <string.h>
 #include <stdlib.h>
 const int maxint = 99;
+const int max_demand_nodes = 50;
 
-void split(char **dst,char *str, const char* spl)
+int split(char **dst,char *str, const char* spl)
 {
+	int n=0;
     char *result = NULL;
 	result = strtok(str, spl);
 	while(result != NULL)
 	{
 		strcpy(*dst++, result);
 		result = strtok(NULL, spl);
+		n++;
 	}
+	return n;
 }	
 
 void print_weights(int* w,int vernum)
@@ -55,17 +59,84 @@ void create_graph(int *weights, char *topo[5000], int vernum, int edge_num)
 	}
 	for(int i =0; i < 4; i++)
 	{
-		delete r[i];
-		r[i] = NULL;
+		if(r[i])
+		{
+		   delete r[i];
+		   r[i] = NULL;
+		}
 	}
 }
+
+int  get_demand(int *s, int *t, int** include_nodes, char *demand)
+{
+	const char *del = ",";
+	char *r[3];
+	for(int i=0; i < 3; i++)
+	{
+		r[i] = new char;
+	}		
+	split(r, demand, del);
+    *s = atoi(r[0]);
+	*t = atoi(r[1]);
+    //printf("s: %d,  t:%d", *s, *t);
+
+    const char *temp = "|";
+
+	char *demand_nodes[max_demand_nodes];
+    for(int i=0; i < max_demand_nodes; i++)
+	{
+		demand_nodes[i] = new char;
+	}
+
+	int n = split(demand_nodes , r[2], temp);
+	*include_nodes = new int[n];
+	for(int i=0; i<n; i++)
+	{
+	    *(*(include_nodes)+i) = atoi(demand_nodes[i]);
+    }
+
+	//free r memory
+	for(int i=0; i < 3; i++)
+	{
+		if(r[i])
+		{
+			delete r[i];
+			r[i] = NULL;
+		}
+	}
+    //free demand_nodes memory
+	for(int i=0; i < max_demand_nodes; i++)
+	{
+		if(demand_nodes[i])
+		{
+			delete demand_nodes[i];
+			demand_nodes[i] = NULL;
+		}
+	}
+
+	return n;
+
+}
+
+
+
+
 
 //你要完成的功能总入口
 void search_route(char *topo[5000], int edge_num, char *demand)
 {
     
-    const int vernum = 5;
+    const int vernum = 20;
 	int weights[vernum][vernum];
+	int s=0, t=0;
+	int *include_nodes = NULL;
+    
+	int include_nodes_num = get_demand(&s, &t, &include_nodes, demand);
+    printf("s:%d\n", s);
+	printf("t:%d\n", t);
+	printf("n:%d\n",include_nodes_num);
+	for(int i=0; i< include_nodes_num; i++)
+		printf("The must nodes:%d\n", include_nodes[i]);
 	
 	//get weights from topo
     create_graph((int*)weights, topo, vernum, edge_num);
@@ -74,16 +145,15 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 	print_weights((int*)weights, vernum);
 
 	//dijstra
-	int *dist = new int[5];
+	int *dist = new int[vernum];
 	int *prev = new int[5000];
 	
 	dijkstra(0, vernum, edge_num, dist, prev, (int*) weights);
     
 	for(int i=0; i < vernum; i++)
-		printf("%d\t",dist[i]);
-
-  
-
+		printf("%d  ",dist[i]);
+   
+    
 
     //unsigned short result[] = {2, 6, 3};//示例中的一个解
 
