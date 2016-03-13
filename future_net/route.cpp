@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <iostream>
+using namespace std;
+
 const int maxint = 99;
 const int max_demand_nodes = 50;
 
@@ -126,7 +129,7 @@ int  get_demand(int *s, int *t, int** include_nodes, char *demand)
 void search_route(char *topo[5000], int edge_num, char *demand)
 {
     
-    const int vernum = 20;
+    const int vernum = 5;
 	int weights[vernum][vernum];
 	int s=0, t=0;
 	int *include_nodes = NULL;
@@ -146,13 +149,14 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 
 	//dijstra
 	int *dist = new int[vernum];
-	int *prev = new int[5000];
+	int *prev = new int[vernum];
 	
 	dijkstra(0, vernum, edge_num, dist, prev, (int*) weights);
     
 	for(int i=0; i < vernum; i++)
-		printf("%d  ",dist[i]);
-   
+		printf("%d  ", prev[i]);
+    
+    searchPath(prev, 0, 2);
     
 
     //unsigned short result[] = {2, 6, 3};//示例中的一个解
@@ -205,5 +209,41 @@ void dijkstra(int startpoint, int vernum, int edge_num,int *dist, int *prev, int
 		
 	}
 }
+
+void searchPath(int *prev, int s, int t)
+{
+	int que[5000];
+	int tot = 1;
+	que[tot] = t;
+	int tmp = prev[t];
+	while(tmp != s)
+	{
+		que[tot] = tmp;
+		tot ++;
+		tmp = prev[tmp];
+	}
+
+	que[tot] = s;
+	for(int i = tot; i>= 1; --i)
+	{
+		if(i != 1)
+			cout << que[i] << "->";
+		else
+			cout << que[i] << endl;
+	}
+	
+
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
