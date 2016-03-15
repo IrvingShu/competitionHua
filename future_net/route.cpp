@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <iostream>
+#include <queue>
+
 using namespace std;
 
 const int maxint = 99;
@@ -23,43 +25,47 @@ int split(char **dst,char *str, const char* spl)
 	return n;
 }	
 
-void print_weights(int* w,int vernum)
+void print_weights(int w[600][600],int vernum)
 {
      for(int i=0; i<vernum; i++)
      {
 		 for(int j=0 ;j<vernum; j++)
 	     {
-			printf("%d",*(w+vernum*i+j));
+			printf("%d", w[i][j]);
 	        printf("  ");	 
 		 }
 		 printf("\n");
       }
 }
 
-void create_graph(int *weights, char *topo[5000], int vernum, int edge_num)
+int create_graph(int nodes_index[600][600], int weights[600][600], char *topo[5000], int edge_num)
 {
-	for(int i=0; i < vernum; i++)
-		for(int j=0; j < vernum; j++)
-		{
-			*(weights + i*vernum + j) = maxint;
-		}
+    int vernum = 0;
     //update input weights
-	int p, q, weight;
+	int index, p, q, weight;
     const char *del = ",";
 	char *r[4];
     for(int i=0; i<4; i++)
 	{
 	   r[i] = new char;
 	}
+
+	int max_node = 0;
 	for(int i=0; i<edge_num; i++)
 	{
-
         split(r,topo[i], del);
+		index = atoi(r[0]);
 		p = atoi(r[1]);
 		q = atoi(r[2]);
 		weight = atoi(r[3]);
-		*(weights + p * vernum + q) = weight;
+	    nodes_index[p][q] = index;
+		weights[p][q] = weight;
+		if(p > max_node){max_node = p ;}
+		if(q > max_node){max_node = q ;}
 	}
+	printf("max_node: %d\n", max_node);
+	vernum = max_node + 1;
+
 	for(int i =0; i < 4; i++)
 	{
 		if(r[i])
@@ -68,6 +74,7 @@ void create_graph(int *weights, char *topo[5000], int vernum, int edge_num)
 		   r[i] = NULL;
 		}
 	}
+	return vernum;
 }
 
 int  get_demand(int *s, int *t, int** include_nodes, char *demand)
@@ -129,35 +136,50 @@ int  get_demand(int *s, int *t, int** include_nodes, char *demand)
 void search_route(char *topo[5000], int edge_num, char *demand)
 {
     
-    const int vernum = 5;
-	int weights[vernum][vernum];
-	int s=0, t=0;
-	int *include_nodes = NULL;
-    
+    int vernum = 0;   // number of vertex
+	int weights[600][600];  //weights between nodes
+	int nodes_index[600][600]; //nodes index
+    for(int i=0; i < 600; i++)
+	{
+		for(int j=0; j < 600; j++)
+		{
+		    weights[i][j] = maxint;
+			nodes_index[i][j] = maxint;
+	    }	
+	}
+
+	int s=0, t=0; // s---> t
+	int *include_nodes = NULL;   //must include nodes
+    printf("number of edge: %d\n", edge_num);
 	int include_nodes_num = get_demand(&s, &t, &include_nodes, demand);
     printf("s:%d\n", s);
 	printf("t:%d\n", t);
-	printf("n:%d\n",include_nodes_num);
+	printf("number of must include nodes: %d\n",include_nodes_num);
+	printf("The must include nodes: ");
 	for(int i=0; i< include_nodes_num; i++)
-		printf("The must nodes:%d\n", include_nodes[i]);
-	
+		printf("%d | ", include_nodes[i]);
+    printf("\n");	
 	//get weights from topo
-    create_graph((int*)weights, topo, vernum, edge_num);
-
+    vernum = create_graph(nodes_index, weights, topo, edge_num);
+    printf("number of vertexs: %d\n", vernum);
     //printf weights
-	print_weights((int*)weights, vernum);
-
+	printf("weights:\n");
+	print_weights(weights, vernum);
+	printf("index of nodes:\n");
+    print_weights(nodes_index, vernum);
 	//dijstra
+	/*
 	int *dist = new int[vernum];
 	int *prev = new int[vernum];
 	
 	dijkstra(0, vernum, edge_num, dist, prev, (int*) weights);
-    
+   
+
 	for(int i=0; i < vernum; i++)
 		printf("%d  ", prev[i]);
     
     searchPath(prev, 0, 2);
-    
+    */
 
     //unsigned short result[] = {2, 6, 3};//示例中的一个解
 
@@ -235,7 +257,34 @@ void searchPath(int *prev, int s, int t)
 
 }
 
+void BFS(int *map, int *path, int vernum)
+{
+	bool visited[vernum];
+	queue<int> qu, qq;
+	int s, t;
+	while(true)
+	{
+		s = qu.size();
+		if(!s) return;
+		while(s--)
+		{
+			t = qu.front();
+			for(int i = 0; i < vernum; i++)
+			{
+				if(*(map + vernum * t + i) != maxint &&  !visited[i])
+				{
+					visited[i] = 1;
+					qu.push(i);
+					path[i] = t;
+				}
+				
+			}
+			qu.pop();
+		}
+	
+	}
 
+}
 
 
 
