@@ -286,7 +286,6 @@ void searchPath(int *prev, int vernum, int s, int t)
 	{
 		cout << s << " don't arrive " <<t <<endl;
 	}
-	
 
 }
 
@@ -332,6 +331,62 @@ void full_array(int *array, int l, vector<int*> *result)
 
 }
 
+
+
+
+void searchIncludeNodesPath(int *prev, int vernum, int s, int t, int *include_nodes, int include_nodes_num, vector<int> *result)
+{
+	int que[5000];
+	int tot = 1;
+	que[0] = t;
+	int tmp = prev[t];
+	bool isPass = true;
+	for(int i = 0; i < vernum - 1; i++)
+	{
+	 	if(tmp == s) break;
+	    
+		que[tot] = tmp;
+		tmp = prev[tmp];
+
+        if(que[tot] == tmp)
+		{
+			isPass = false;
+			break;
+        }
+		tot++;
+		
+	}
+
+	que[tot] = s;
+	if(isPass)
+	{	
+		bool bIsUse = true;
+		for(int i = tot - 1; i> 0; i--)
+		{
+            for(int j = 0; j < include_nodes_num; j++)
+			{
+				if(que[i] == include_nodes[j]) bIsUse = false;
+
+			}
+        }
+		if(bIsUse)
+		{
+			for(int i=tot; i > 0; i-- )
+			{
+				result->push_back(que[i]);
+				cout << que[i] << "->";
+			}
+		}
+		//result->push_back(que[0]);
+		//cout << que[0] <<endl;
+	}
+	else
+	{
+		cout << s << " don't arrive " <<t <<endl;
+	}
+}
+
+
 //你要完成的功能总入口
 void search_route(char *topo[5000], int edge_num, char *demand)
 {
@@ -373,7 +428,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     vector<int*> include_nodes_farr;
 
 	full_array(include_nodes, include_nodes_num, &include_nodes_farr);
-    cout << "full array:" << endl; 
+    cout << "the number of full array: " << include_nodes_farr.size() << endl; 
 	for(unsigned int i = 0; i < include_nodes_farr.size(); i++)
 	{
 		for(int j=0; j < include_nodes_num; j++)
@@ -397,37 +452,116 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 		printf("%d  ", sDist[i]);
     printf("\n"); 
     cout << "s->v path:" <<endl;
+       
+ 
     for(int i=0; i < include_nodes_num; i++)
 	{
-		searchPath(sPrev, vernum, s_p, include_nodes[i]);
+
+        cout << "s to include nodesz; " << s_p << " -> " << include_nodes[i] << endl;
+		cout << "dist" << sDist[include_nodes[i]] << endl;
+		searchPath( sPrev, vernum, s_p, include_nodes[i]);
+       
 	}
+
+    
+   
+
 	//
 	//
 	//path between must include nodes
-	
-	for(unsigned int i = 0; i < include_nodes_farr.size(); i++)
+    
+	cout << endl;
+    cout << "include nodes------------------------------------------- include nodes"<<endl;
+    map<int, int*> include_nodes_dist;
+	map<int, int*> include_nodes_prev;
+    
+    //vector<int*> include_nodes_dist;
+	//vector<int*> include_nodes_prev;
+
+	for(int i=0; i < include_nodes_num; i++)
 	{
 		int *tmp_dist = new int[vernum];
 		int *tmp_prev = new int[vernum];
-	    bool sV[600];
-	    dijkstra(include_nodes_farr[i][0], vernum, edge_num, tmp_dist, tmp_prev, weights ,sV);
-        cout << "full array:"<<i<<endl;
-		for(int j = 0; j < include_nodes_num -1; j++)
-		{
-            //cout << "tmp_prev: " << tmp_prev[j] <<endl;
-			//cout << include_nodes_farr[i][j+1] <<endl;
-          
-            cout << include_nodes_farr[i][j]<< " to " << include_nodes_farr[i][j+1] << " path:"<<endl;
-			searchPath(tmp_prev, vernum, include_nodes_farr[i][j], include_nodes_farr[i][j+1]);
-			cout << endl;
-			//delete tmp_dist;
-			//delete tmp_prev;
-		}
+		bool bV[600];
+		memset(bV, 0, 600);
+		dijkstra(include_nodes[i], vernum, edge_num, tmp_dist, tmp_prev, weights, bV);
+		//include_nodes_dist.push_back(tmp_dist);
+		//include_nodes_prev.push_back(tmp_prev);
 		
-	
+		include_nodes_dist.insert(pair<int,int*>(include_nodes[i], tmp_dist));
+		include_nodes_prev.insert(pair<int, int*>(include_nodes[i], tmp_prev));
+
+	}
+	for(map<int, int*>::iterator iter = include_nodes_prev.begin(); iter != include_nodes_prev.end(); iter++ )
+	{
+		cout << "key:  " <<  iter->first<< "value: " << iter->second[0]  <<endl;
 	}
 
-     
+	vector<int> tmp;
+    vector<vector<int> > include_nodes_path(include_nodes_farr.size(), tmp); 
+    
+    for(int i=0 ; i < include_nodes_farr.size(); i++)
+	{
+         for(int j=0; j < include_nodes_num - 1; j++)
+		 {
+
+		     searchIncludeNodesPath(include_nodes_prev[include_nodes_farr[i][j]], vernum, include_nodes_farr[i][j], include_nodes_farr[i][j+1], include_nodes_farr[i], include_nodes_num, &include_nodes_path[i]);
+		 }
+         if(include_nodes_path[i].size() > 0)
+			include_nodes_path[i].push_back(include_nodes_farr[i][include_nodes_num -1]);
+		 
+
+    }
+
+    
+   cout << "V path:"<<endl;
+
+   for(int i=0; i < include_nodes_path.size(); i++)
+   {
+	   for(vector<int>::iterator iter = include_nodes_path[i].begin(); iter != include_nodes_path[i].end(); iter++)
+	   {
+
+		   cout << *iter << " ";
+	   }
+	   cout << endl;
+    }
+	/*
+	for(int i = 0; i < include_nodes_num; i++)
+	{
+		int *tmp_dist = new int[vernum];
+		int *tmp_prev = new int[vernum];
+
+		//V'->t
+        int *tDist = new int[vernum];
+        int *tPrev = new int[vernum];
+
+
+	    bool sV[600];
+	    dijkstra(include_nodes[i], vernum, edge_num, tmp_dist, tmp_prev, weights ,sV);
+        
+		
+		for(unsigned int j = 0; j < include_nodes_farr.size(); j++ )
+        {
+         
+            if(include_nodes[i] == include_nodes_farr[j][0])
+            {
+
+				cout << "Full Array: " << j << endl;
+
+				for(int k = 0; k < include_nodes_num - 1; k++ )
+				{
+
+					cout << include_nodes_ifarr[j][k] << "to" << include_nodes_farr[j][k+1] << "path" << endl;
+					searchPath(tmp_prev, vernum, include_nodes_farr[j][k], include_nodes_farr[j][k+1]);
+					cout << endl;
+				}
+
+			}
+		}
+	}*/
+    // must include nodes to t
+
+
 }
 
 
