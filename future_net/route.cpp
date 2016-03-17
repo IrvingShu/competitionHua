@@ -135,76 +135,6 @@ int  get_demand(int *s, int *t, int** include_nodes, char *demand)
 
 
 
-/*
-//你要完成的功能总入口
-void search_route(char *topo[5000], int edge_num, char *demand)
-{
-    
-    int vernum = 0;   // number of vertex
-	int weights[600][600];  //weights between nodes
-	int nodes_index[600][600]; //nodes index
-    for(int i=0; i < 600; i++)
-	{
-		for(int j=0; j < 600; j++)
-		{
-		    weights[i][j] = maxint;
-			nodes_index[i][j] = maxint;
-	    }	
-	}
-
-	int s=0, t=0; // s---> t
-	int *include_nodes = NULL;   //must include nodes
-    printf("number of edge: %d\n", edge_num);
-	int include_nodes_num = get_demand(&s, &t, &include_nodes, demand);
-    printf("s:%d\n", s);
-	printf("t:%d\n", t);
-	printf("number of must include nodes: %d\n",include_nodes_num);
-	printf("The must include nodes: ");
-	for(int i=0; i< include_nodes_num; i++)
-		printf("%d | ", include_nodes[i]);
-    printf("\n");	
-	//get weights from topo
-    vernum = create_graph(nodes_index, weights, topo, edge_num);
-    printf("number of vertexs: %d\n", vernum);
-    //printf weights
-	printf("weights:\n");
-	print_weights(weights, vernum);
-	printf("index of nodes:\n");
-    print_weights(nodes_index, vernum);
-	
-
-	//full array between must include nodes
-	int **result;
-	int m,n;
-	full_array(include_nodes, include_nodes_num, result, m,n );
-
-	
-	//dijstra
-	
-
-
-	int *dist = new int[vernum];
-	int *prev = new int[vernum];
-	//full array
-	
-
-
-	dijkstra(0, vernum, edge_num, dist, prev,  weights);
-   
-
-    printf("path: ");
-	for(int i=0; i < vernum; i++)
-		printf("%d  ", prev[i]);
-    printf("\n"); 
-    searchPath(prev, 0, 2);
-    
-
-    //unsigned short result[] = {2, 6, 3};//示例中的一个解
-
-    //for (int i = 0; i < 3; i++)
-      //  record_result(result[i]);
-}*/
-
 void dijkstra(int startpoint, int vernum, int edge_num,int *dist, int *prev, int w[600][600], bool s[600]) 
 {
 	//bool s[5000];
@@ -334,7 +264,7 @@ void full_array(int *array, int l, vector<int*> *result)
 
 
 
-void searchIncludeNodesPath(int *prev, int vernum, int s, int t, int *include_nodes, int include_nodes_num, vector<int> *result)
+bool searchIncludeNodesPath(int *prev, int vernum, int s, int t, int *include_nodes, int include_nodes_num, vector<int> *result)
 {
 	int que[5000];
 	int tot = 1;
@@ -384,6 +314,8 @@ void searchIncludeNodesPath(int *prev, int vernum, int s, int t, int *include_no
 	{
 		cout << s << " don't arrive " <<t <<endl;
 	}
+
+	return isPass;
 }
 
 
@@ -454,12 +386,14 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     cout << "s->v path:" <<endl;
        
  
+
     for(int i=0; i < include_nodes_num; i++)
 	{
 
         cout << "s to include nodesz; " << s_p << " -> " << include_nodes[i] << endl;
 		cout << "dist" << sDist[include_nodes[i]] << endl;
 		searchPath( sPrev, vernum, s_p, include_nodes[i]);
+        
        
 	}
 
@@ -505,63 +439,73 @@ void search_route(char *topo[5000], int edge_num, char *demand)
          for(int j=0; j < include_nodes_num - 1; j++)
 		 {
 
-		     searchIncludeNodesPath(include_nodes_prev[include_nodes_farr[i][j]], vernum, include_nodes_farr[i][j], include_nodes_farr[i][j+1], include_nodes_farr[i], include_nodes_num, &include_nodes_path[i]);
+		     bool isPass = searchIncludeNodesPath(include_nodes_prev[include_nodes_farr[i][j]], vernum, include_nodes_farr[i][j], include_nodes_farr[i][j+1], include_nodes_farr[i], include_nodes_num, &include_nodes_path[i]);
+             if(!isPass) break;
 		 }
          if(include_nodes_path[i].size() > 0)
 			include_nodes_path[i].push_back(include_nodes_farr[i][include_nodes_num -1]);
 		 
-
     }
 
     
    cout << "V path:"<<endl;
 
-   for(int i=0; i < include_nodes_path.size(); i++)
+   for(unsigned int i=0; i < include_nodes_path.size(); i++)
    {
 	   for(vector<int>::iterator iter = include_nodes_path[i].begin(); iter != include_nodes_path[i].end(); iter++)
 	   {
-
+           
 		   cout << *iter << " ";
+
 	   }
 	   cout << endl;
     }
-	/*
-	for(int i = 0; i < include_nodes_num; i++)
-	{
-		int *tmp_dist = new int[vernum];
-		int *tmp_prev = new int[vernum];
 
-		//V'->t
-        int *tDist = new int[vernum];
-        int *tPrev = new int[vernum];
-
-
-	    bool sV[600];
-	    dijkstra(include_nodes[i], vernum, edge_num, tmp_dist, tmp_prev, weights ,sV);
+   cout << "-------------------------V clean path:--------------------------------" <<endl;
+   vector<vector<int> > clean_include_nodes_path;
+   for(unsigned int i=0; i < include_nodes_path.size(); i++)
+   {
+		//for(vector<int>::iterator iter = include_nodes_path[i].begin(); iter != include_nodes_path[i].end(); iter++)
+	int count = 0;
+	for(int j = 0; j < include_nodes_num; j++)
+     {
         
-		
-		for(unsigned int j = 0; j < include_nodes_farr.size(); j++ )
-        {
-         
-            if(include_nodes[i] == include_nodes_farr[j][0])
-            {
-
-				cout << "Full Array: " << j << endl;
-
-				for(int k = 0; k < include_nodes_num - 1; k++ )
-				{
-
-					cout << include_nodes_ifarr[j][k] << "to" << include_nodes_farr[j][k+1] << "path" << endl;
-					searchPath(tmp_prev, vernum, include_nodes_farr[j][k], include_nodes_farr[j][k+1]);
-					cout << endl;
-				}
-
-			}
+		vector<int>::iterator result = find(include_nodes_path[i].begin(), include_nodes_path[i].end(), include_nodes[j]);
+		if(result != include_nodes_path[i].end())
+		{
+		      count ++;	
 		}
-	}*/
-    // must include nodes to t
+		
+	 }
+     if(count == include_nodes_num)
+	 {
+		clean_include_nodes_path.push_back(include_nodes_path[i]);
+	 }
+			
+   }
+   
 
+   for(unsigned int i=0; i < clean_include_nodes_path.size(); i++)
+   {
+	   for(vector<int>::iterator iter = clean_include_nodes_path[i].begin(); iter != clean_include_nodes_path[i].end(); iter++)
+	   {
+		   cout << *iter << " ";
 
+       }
+	   cout << endl;
+	}
+
+   //------------------------V'-->t---------------------------
+   //
+
+	for(map<int, int*>::iterator iter = include_nodes_prev.begin(); iter != include_nodes_prev.end(); iter++ )
+	{
+		
+	   cout << "key:  " <<  iter->first<< "value: " << iter->second[0]  <<endl;
+	
+       searchPath( iter->second , vernum,  iter->first, t_p);
+  
+    }
 }
 
 
