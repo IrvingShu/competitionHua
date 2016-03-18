@@ -42,7 +42,7 @@ void print_weights(int w[600][600],int vernum)
       }
 }
 
-int create_graph(int nodes_index[600][600], int weights[600][600], char *topo[5000], int edge_num)
+int create_graph(int weights_index[600][600], int weights[600][600], char *topo[5000], int edge_num)
 {
     int vernum = 0;
     //update input weights
@@ -62,7 +62,7 @@ int create_graph(int nodes_index[600][600], int weights[600][600], char *topo[50
 		p = atoi(r[1]);
 		q = atoi(r[2]);
 		weight = atoi(r[3]);
-	    nodes_index[p][q] = index;
+	    weights_index[p][q] = index;
 		weights[p][q] = weight;
 		if(p > max_node){max_node = p ;}
 		if(q > max_node){max_node = q ;}
@@ -180,7 +180,7 @@ void dijkstra(int startpoint, int vernum, int edge_num,int *dist, int *prev, int
 	}
 }
 
-void searchPath(int *prev, int vernum, int s, int t)
+void searchPath(int *prev, int vernum, int s, int t, vector<int> *result)
 {
 	int que[5000];
 	int tot = 1;
@@ -209,8 +209,10 @@ void searchPath(int *prev, int vernum, int s, int t)
 		{
         
 			cout << que[i] << "->";
+			result->push_back(que[i]);
 		}
-		cout << que[0] <<endl;
+		cout << "result: " << result->size() <<endl;
+		//cout << que[0] <<endl;
 	}
 	else
 	{
@@ -304,11 +306,12 @@ bool searchIncludeNodesPath(int *prev, int vernum, int s, int t, int *include_no
 			for(int i=tot; i > 0; i-- )
 			{
 				result->push_back(que[i]);
-				cout << que[i] << "->";
+				//cout << que[i] << "->";
 			}
 		}
 		//result->push_back(que[0]);
 		//cout << que[0] <<endl;
+		cout << endl;
 	}
 	else
 	{
@@ -318,6 +321,72 @@ bool searchIncludeNodesPath(int *prev, int vernum, int s, int t, int *include_no
 	return isPass;
 }
 
+void get_result(vector<vector<int> > spath, vector<vector<int> > vpath, vector<vector<int> > tpath, vector<vector<int> > *pass_path)
+{
+
+	//vector<int> result;
+    cout << "Final result" <<endl;
+	for(int i=0; i < spath.size(); i++)
+	{
+		for(int j=0; j < vpath.size(); j++)
+		{
+			if(spath[i].back() == vpath[j].front())
+			{
+				for(int k=0; k < tpath.size(); k++)
+				{
+		           if(vpath[j].back() == tpath[k].front())
+				   {
+					   
+					   bool isAgainFlag = false;
+				       for(vector<int>::iterator iter = spath[i].begin(); iter != spath[i].end() -1; iter++)
+					   {
+							if(find(vpath[j].begin(), vpath[j].end(), *iter ) != vpath[j].end())
+							{	
+								isAgainFlag = true;
+
+							}
+						
+					   }
+                       if(isAgainFlag)
+					   {
+							break;
+					   }
+					   for(vector<int>::iterator iter = vpath[j].begin(); iter != vpath[j].end() -1; iter++)
+					   {
+					         if(find(tpath[k].begin(), tpath[k].end(), *iter) != tpath[k].end())
+							 {	
+								 isAgainFlag = true;
+							 }
+					   
+					   }
+					   if(isAgainFlag) break;
+                      
+
+                       vector<int> result(0);
+					   result.insert(result.end(), spath[i].begin(), spath[i].end()-1);
+					   result.insert(result.end(), vpath[j].begin(), vpath[j].end()-1);
+					   result.insert(result.end(), tpath[k].begin(), tpath[k].end());
+                       
+
+                       //for(int h =0; h < result.size(); h++)
+					   //{
+						//   cout << result[h] << " ";
+					  // }
+					   //cout << endl;
+					  // result.clear();
+					   pass_path->push_back(result);
+                       
+				   }
+			     
+				}
+			}
+		
+		}
+	
+	}
+
+}
+
 
 //你要完成的功能总入口
 void search_route(char *topo[5000], int edge_num, char *demand)
@@ -325,13 +394,13 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     
     int vernum = 0;   // number of vertex
 	int weights[600][600];  //weights between nodes
-	int nodes_index[600][600]; //nodes index
+	int weights_index[600][600]; //nodes index
     for(int i=0; i < 600; i++)
 	{
 		for(int j=0; j < 600; j++)
 		{
 		    weights[i][j] = maxint;
-			nodes_index[i][j] = maxint;
+			weights_index[i][j] = maxint;
 	    }	
 	}
 
@@ -347,19 +416,20 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 		printf("%d | ", include_nodes[i]);
     printf("\n");	
 	//get weights from topo
-    vernum = create_graph(nodes_index, weights, topo, edge_num);
+    vernum = create_graph(weights_index, weights, topo, edge_num);
     printf("number of vertexs: %d\n", vernum);
     //printf weights
 	printf("weights:\n");
 	print_weights(weights, vernum);
 	printf("index of nodes:\n");
-    print_weights(nodes_index, vernum);
+    print_weights(weights_index, vernum);
 	
 
 	//full array between must include nodes
     vector<int*> include_nodes_farr;
 
 	full_array(include_nodes, include_nodes_num, &include_nodes_farr);
+	/*
     cout << "the number of full array: " << include_nodes_farr.size() << endl; 
 	for(unsigned int i = 0; i < include_nodes_farr.size(); i++)
 	{
@@ -369,7 +439,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 		}
 		cout << endl;
 	
-	}
+	}*/
     //s -- > V'
 	//
 	
@@ -385,18 +455,29 @@ void search_route(char *topo[5000], int edge_num, char *demand)
     printf("\n"); 
     cout << "s->v path:" <<endl;
        
- 
+    vector<int> eachpath;
+	cout << "eachpath:" << eachpath.size() <<endl;
+    vector<vector<int> > sToinclude_nodes_path(include_nodes_num, eachpath);
 
     for(int i=0; i < include_nodes_num; i++)
 	{
-
+        cout << endl;        
         cout << "s to include nodesz; " << s_p << " -> " << include_nodes[i] << endl;
 		cout << "dist" << sDist[include_nodes[i]] << endl;
-		searchPath( sPrev, vernum, s_p, include_nodes[i]);
-        
-       
+		searchPath( sPrev, vernum, s_p, include_nodes[i], &sToinclude_nodes_path[i]);
+        sToinclude_nodes_path[i].push_back(include_nodes[i]);
 	}
-
+	/*
+     cout << "S->V path" <<endl; 
+	for(int i=0; i < include_nodes_num; i++)
+	{
+		for(unsigned int j=0; j < sToinclude_nodes_path[i].size(); j++)
+	    {
+			cout << sToinclude_nodes_path[i][j] << " ";
+		
+		}
+		cout << endl;
+	}*/
     
    
 
@@ -434,7 +515,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 	vector<int> tmp;
     vector<vector<int> > include_nodes_path(include_nodes_farr.size(), tmp); 
     
-    for(int i=0 ; i < include_nodes_farr.size(); i++)
+    for(unsigned int i=0 ; i < include_nodes_farr.size(); i++)
 	{
          for(int j=0; j < include_nodes_num - 1; j++)
 		 {
@@ -497,17 +578,73 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 
    //------------------------V'-->t---------------------------
    //
-
+   
+    vector<int> VtPath;
+    vector<vector<int> > include_nodesTot_path(include_nodes_num, VtPath);
+	int i =0;
 	for(map<int, int*>::iterator iter = include_nodes_prev.begin(); iter != include_nodes_prev.end(); iter++ )
 	{
-		
-	   cout << "key:  " <<  iter->first<< "value: " << iter->second[0]  <<endl;
+	   
+    
+	   //cout << "key:  " <<  iter->first<< "value: " << iter->second[0]  <<endl;
 	
-       searchPath( iter->second , vernum,  iter->first, t_p);
-  
+       searchPath( iter->second , vernum,  iter->first, t_p, &include_nodesTot_path[i]);
+       include_nodesTot_path[i].push_back(t_p);
+	   i++;
     }
+
+
+
+    cout << "S->V path" <<endl;
+    print_path(sToinclude_nodes_path);
+	
+	cout << "V-V path" <<endl;
+	print_path(clean_include_nodes_path);
+
+	cout << "----------------V to Dist------------------------" <<endl;
+	print_path(include_nodesTot_path);
+	vector<vector<int> > pass_path;
+    get_result(sToinclude_nodes_path,clean_include_nodes_path, include_nodesTot_path, &pass_path);
+    cout << "pass_path" << pass_path.size() << endl;
+    
+	print_path(pass_path);
+    
+	convert_demand_path(pass_path, weights_index);
+	
+
+
+ 
 }
 
+
+void print_path(vector<vector<int> > path)
+{
+	for(int i=0; i < path.size(); i++)
+	{
+		for(int j=0; j < path[i].size(); j++)
+		{
+			cout << path[i][j] << "  ";
+	
+		}
+		cout << endl;
+	}
+
+}
+
+void convert_demand_path(vector<vector<int> > path, int weights_index[600][600])
+{
+	for(int i= 0; i < path.size(); i++)
+	{
+		for(int j=0; j < path[i].size()-1; j++)
+		{
+			int p = path[i][j];
+			int q = path[i][j+1];
+			cout << weights_index[p][q] << " | ";
+		}
+		cout << endl;
+	}
+
+}
 
 
 
