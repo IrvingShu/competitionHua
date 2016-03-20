@@ -21,4 +21,7 @@ void full_array(int *array, int l, vector<int*> *result);
 void print_path(vector<vector<int> > path);
 void convert_demand_path(vector<vector<int> > path, int weights_index[600][600]);
 
+int get_result(vector<vector<int> > spath, int *sdist, vector<vector<int> > vpath, map<int, int*> include_nodes_dist, vector<vector<int> > tpath, vector<vector<int> > *pass_path);
+
+
 #endif

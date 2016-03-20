@@ -321,11 +321,14 @@ bool searchIncludeNodesPath(int *prev, int vernum, int s, int t, int *include_no
 	return isPass;
 }
 
-void get_result(vector<vector<int> > spath, vector<vector<int> > vpath, vector<vector<int> > tpath, vector<vector<int> > *pass_path)
+int get_result(vector<vector<int> > spath, int *sdist, vector<vector<int> > vpath,  map<int,int*> include_nodes_dist, vector<vector<int> > tpath, vector<vector<int> > *pass_path)
 {
 
 	//vector<int> result;
-    cout << "Final result" <<endl;
+    cout << "Final result" <<endl; 
+	int shortest_dist =0;
+    vector<int> result(0);
+
 	for(int i=0; i < spath.size(); i++)
 	{
 		for(int j=0; j < vpath.size(); j++)
@@ -337,10 +340,10 @@ void get_result(vector<vector<int> > spath, vector<vector<int> > vpath, vector<v
 		           if(vpath[j].back() == tpath[k].front())
 				   {
 					   
-					   bool isAgainFlag = false;
+	     			   bool isAgainFlag = false;
 				       for(vector<int>::iterator iter = spath[i].begin(); iter != spath[i].end() -1; iter++)
 					   {
-							if(find(vpath[j].begin(), vpath[j].end(), *iter ) != vpath[j].end())
+		    				if(find(vpath[j].begin(), vpath[j].end(), *iter ) != vpath[j].end())
 							{	
 								isAgainFlag = true;
 
@@ -360,22 +363,48 @@ void get_result(vector<vector<int> > spath, vector<vector<int> > vpath, vector<v
 					   
 					   }
 					   if(isAgainFlag) break;
-                      
+                       
+					   int s_v_node = spath[i].back(); 
+					   int v_v_node = vpath[j].back();
+					   int v_t_node = tpath[k].back(); 
+					
+					   int v_v_dist = 0;
 
-                       vector<int> result(0);
+					   /*there is problem*/
+					   for(unsigned int g = 0; g < vpath[j].size()-1; g++)
+					   { 
+                          int *tmp_dist = include_nodes_dist[vpath[j][g]];
+						   v_v_dist += tmp_dist[vpath[j][g+1]];
+					   }
+
+                       bool is_saved_path = false;
+                       int path_dist =  sdist[s_v_node] + v_v_dist + include_nodes_dist[v_v_node][v_t_node];
+                       cout << "path:" << sdist[s_v_node]<< "  v-v:  "  << v_v_dist<< " v-t "<<include_nodes_dist[v_v_node][v_t_node] <<endl;
+					   if(0 == shortest_dist) 
+					   {
+						   shortest_dist = path_dist;
+					       is_saved_path = true;
+					   }
+                       if(path_dist < shortest_dist)
+					   { 
+                            shortest_dist = path_dist;
+							is_saved_path = true;
+					   }
+					   if(is_saved_path)
+					   {
+						    result.clear();
+							result.insert(result.end(), spath[i].begin(), spath[i].end()-1);
+							result.insert(result.end(), vpath[j].begin(), vpath[j].end()-1);
+							result.insert(result.end(), tpath[k].begin(), tpath[k].end());
+						}
+ 
+                       /*                      
+					   vector<int> result(0);
 					   result.insert(result.end(), spath[i].begin(), spath[i].end()-1);
 					   result.insert(result.end(), vpath[j].begin(), vpath[j].end()-1);
 					   result.insert(result.end(), tpath[k].begin(), tpath[k].end());
-                       
-
-                       //for(int h =0; h < result.size(); h++)
-					   //{
-						//   cout << result[h] << " ";
-					  // }
-					   //cout << endl;
-					  // result.clear();
-					   pass_path->push_back(result);
-                       
+                       pass_path->push_back(result);
+					   */
 				   }
 			     
 				}
@@ -384,6 +413,8 @@ void get_result(vector<vector<int> > spath, vector<vector<int> > vpath, vector<v
 		}
 	
 	}
+	pass_path->push_back(result);
+	return shortest_dist;
 
 }
 
@@ -467,18 +498,7 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 		searchPath( sPrev, vernum, s_p, include_nodes[i], &sToinclude_nodes_path[i]);
         sToinclude_nodes_path[i].push_back(include_nodes[i]);
 	}
-	/*
-     cout << "S->V path" <<endl; 
-	for(int i=0; i < include_nodes_num; i++)
-	{
-		for(unsigned int j=0; j < sToinclude_nodes_path[i].size(); j++)
-	    {
-			cout << sToinclude_nodes_path[i][j] << " ";
 		
-		}
-		cout << endl;
-	}*/
-    
    
 
 	//
@@ -593,22 +613,25 @@ void search_route(char *topo[5000], int edge_num, char *demand)
 	   i++;
     }
 
+    
 
-
-    cout << "S->V path" <<endl;
+    cout << "------------------S->V--------------- path" <<endl;
     print_path(sToinclude_nodes_path);
 	
-	cout << "V-V path" <<endl;
+	cout << "-------------------V-V path--------------" <<endl;
 	print_path(clean_include_nodes_path);
 
 	cout << "----------------V to Dist------------------------" <<endl;
 	print_path(include_nodesTot_path);
 	vector<vector<int> > pass_path;
-    get_result(sToinclude_nodes_path,clean_include_nodes_path, include_nodesTot_path, &pass_path);
-    cout << "pass_path" << pass_path.size() << endl;
+    int shortest_path = get_result(sToinclude_nodes_path, sDist, clean_include_nodes_path, include_nodes_dist, include_nodesTot_path, &pass_path);
     
+    cout <<  "shortest_path: " << shortest_path <<endl;
+
+        
 	print_path(pass_path);
-    
+
+
 	convert_demand_path(pass_path, weights_index);
 	
 
